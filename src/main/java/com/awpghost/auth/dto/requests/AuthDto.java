@@ -12,9 +12,9 @@ public class AuthDto {
     @NotEmpty
     private String email;
 
+    @ValidPassword
     @NotNull
     @NotEmpty
-    @ValidPassword
     private String password;
 
     public String getEmail() {
