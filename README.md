@@ -91,3 +91,13 @@ Then, you can run the app as follows:
 ```
 $ build/native-image/auth
 ```
+
+# Keycloak
+
+Integrated Keycloak with Spring Boot.
+
+Official Keycloak documentation: [https://www.keycloak.org/documentation](https://www.keycloak.org/documentation)
+
+### Reference Used:
+* https://www.baeldung.com/spring-boot-keycloak
+* https://gist.github.com/ThomasVitale/5544d276479d3895f4e8632720f5f92b

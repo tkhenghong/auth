@@ -1,0 +1,39 @@
+{
+  "properties": [
+    {
+      "name": "password.lower.case.character.length",
+      "type": "java.lang.Integer",
+      "description": "Minimum number of lower case characters in the password."
+    },
+    {
+      "name": "password.upper.case.character.length",
+      "type": "java.lang.Integer",
+      "description": "Minimum number of upper case characters in the password."
+    },
+    {
+      "name": "password.digit.number.character.length",
+      "type": "java.lang.String",
+      "description": "Minimum number of digit number in the password."
+    },
+    {
+      "name": "password.special.character.length",
+      "type": "java.lang.Integer",
+      "description": "Minimum number of special characters in the password."
+    },
+    {
+      "name": "password.minimum.length",
+      "type": "java.lang.Integer",
+      "description": "Minimum number of characters in the password."
+    },
+    {
+      "name": "password.special.character.list",
+      "type": "java.lang.String",
+      "description": "Specify which special characters are used in password policy. Used for generation or validate password requirments."
+    },
+    {
+      "name": "password.maximum.length",
+      "type": "java.lang.String",
+      "description": "Maximum number of characters in the password."
+    }
+  ]
+}

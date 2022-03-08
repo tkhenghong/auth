@@ -2,7 +2,6 @@ plugins {
 	id 'org.springframework.boot' version '2.6.4'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 	id 'java'
-	id 'org.springframework.experimental.aot' version '0.11.3'
 }
 
 group = 'com.awpghost'
@@ -22,11 +21,15 @@ repositories {
 
 ext {
 	set('springCloudVersion', "2021.0.1")
+	set('keycloakVersion', "17.0.0")
+	set('arangodbVersion', "2.3.3.RELEASE")
 }
 
 dependencies {
+	implementation "org.keycloak:keycloak-spring-boot-starter:${keycloakVersion}"
 	implementation 'com.arangodb:arangodb-spring-data:3.6.0'
-	implementation 'com.arangodb:arangodb-spring-boot-starter:2.3.3.RELEASE'
+	implementation "com.arangodb:arangodb-spring-boot-starter:${arangodbVersion}"
+	implementation 'org.passay:passay:1.6.0' // Password validation library
 
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -67,6 +70,7 @@ dependencies {
 dependencyManagement {
 	imports {
 		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+		mavenBom "org.keycloak.bom:keycloak-adapter-bom:${keycloakVersion}"
 	}
 }
 
@@ -74,7 +78,3 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
-tasks.named('bootBuildImage') {
-	builder = 'paketobuildpacks/builder:tiny'
-	environment = ['BP_NATIVE_IMAGE': 'true']
-}
