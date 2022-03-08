@@ -2,7 +2,9 @@ package com.awpghost.auth.controllers;
 
 import com.awpghost.auth.dto.requests.AuthDto;
 import com.awpghost.auth.dto.responses.GenericResponse;
+import com.awpghost.auth.services.AuthService;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,10 +17,18 @@ import javax.validation.Valid;
 @RequestMapping("/auth")
 @Log4j2
 public class AuthController {
+    AuthService authService;
+
+    @Autowired
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     @PostMapping("/registration")
     public GenericResponse registerByEmail(@Valid final AuthDto authDto, final HttpServletRequest request) {
         log.debug("Registering user account with information: {}", authDto);
+
+        authService.register(authDto);
 
         return new GenericResponse(HttpStatus.OK, "User account registered successfully");
     }
