@@ -4,8 +4,6 @@ G.H.O.S.T Auth Module
 # Read Me First
 The following was discovered as part of building this project:
 
-* The following dependencies are not known to work with Spring Native: 'Spring Boot DevTools, Spring Configuration Processor, Spring HATEOAS, Spring Integration, Cloud Bus, Zipkin Client, Eureka Discovery Client, Prometheus, Gateway, OpenFeign, Cloud Stream, Resilience4J'. As a result, your application may not work as expected.
-
 # Getting Started
 
 ### Reference Documentation
@@ -18,7 +16,6 @@ For further reference, please consider the following sections:
 * [Spring Integration Test Module Reference Guide](https://docs.spring.io/spring-integration/reference/html/testing.html)
 * [Spring Integration Apache Kafka Module Reference Guide](https://docs.spring.io/spring-integration/reference/html/kafka.html)
 * [Spring Integration Security Module Reference Guide](https://docs.spring.io/spring-integration/reference/html/security.html)
-* [Spring Native Reference Guide](https://docs.spring.io/spring-native/docs/current/reference/htmlsingle/)
 * [Spring Boot DevTools](https://docs.spring.io/spring-boot/docs/2.6.4/reference/htmlsingle/#using-boot-devtools)
 * [Spring Configuration Processor](https://docs.spring.io/spring-boot/docs/2.6.4/reference/htmlsingle/#configuration-metadata-annotation-processor)
 * [Spring Security](https://docs.spring.io/spring-boot/docs/2.6.4/reference/htmlsingle/#boot-features-security)
@@ -54,43 +51,7 @@ The following guides illustrate how to use some features concretely:
 These additional references should also help you:
 
 * [Gradle Build Scans – insights for your project's build](https://scans.gradle.com#gradle)
-* [Configure the Spring AOT Plugin](https://docs.spring.io/spring-native/docs/0.11.3/reference/htmlsingle/#spring-aot-gradle)
 * [Declarative REST calls with Spring Cloud OpenFeign sample](https://github.com/spring-cloud-samples/feign-eureka)
-
-## Spring Native
-
-This project has been configured to let you generate either a lightweight container or a native executable.
-
-### Lightweight Container with Cloud Native Buildpacks
-If you're already familiar with Spring Boot container images support, this is the easiest way to get started with Spring Native.
-Docker should be installed and configured on your machine prior to creating the image, see [the Getting Started section of the reference guide](https://docs.spring.io/spring-native/docs/0.11.3/reference/htmlsingle/#getting-started-buildpacks).
-
-To create the image, run the following goal:
-
-```
-$ ./gradlew bootBuildImage
-```
-
-Then, you can run the app like any other container:
-
-```
-$ docker run --rm auth:0.0.1-SNAPSHOT
-```
-
-### Executable with Native Build Tools
-Use this option if you want to explore more options such as running your tests in a native image.
-The GraalVM native-image compiler should be installed and configured on your machine, see [the Getting Started section of the reference guide](https://docs.spring.io/spring-native/docs/0.11.3/reference/htmlsingle/#getting-started-native-build-tools).
-
-To create the executable, run the following goal:
-
-```
-$ ./gradlew nativeBuild
-```
-
-Then, you can run the app as follows:
-```
-$ build/native-image/auth
-```
 
 # Keycloak
 
@@ -101,3 +62,10 @@ Official Keycloak documentation: [https://www.keycloak.org/documentation](https:
 ### Reference Used:
 * https://www.baeldung.com/spring-boot-keycloak
 * https://gist.github.com/ThomasVitale/5544d276479d3895f4e8632720f5f92b
+
+# Registration
+
+Referred Registration from Baeldung website.
+
+### Reference Used:
+* https://www.baeldung.com/spring-security-registration
