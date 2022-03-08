@@ -31,6 +31,8 @@ public class AuthServiceImpl implements AuthService {
                 .password(authDto.getPassword())
                 .build();
 
+        // TODO: encrypt password
+        // TODO: create user
         return authRepository.save(auth);
     }
 
