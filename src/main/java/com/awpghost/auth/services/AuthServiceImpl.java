@@ -5,6 +5,7 @@ import com.awpghost.auth.exceptions.UserAlreadyExistException;
 import com.awpghost.auth.persistence.models.Auth;
 import com.awpghost.auth.persistence.repositories.AuthRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,13 +15,16 @@ public class AuthServiceImpl implements AuthService {
 
     private final AuthRepository authRepository;
 
+    private final PasswordEncoder passwordEncoder;
+
     @Autowired
-    AuthServiceImpl(AuthRepository authRepository) {
+    AuthServiceImpl(AuthRepository authRepository, PasswordEncoder passwordEncoder) {
         this.authRepository = authRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
-    public Auth register(AuthDto authDto) {
+    public Auth registerByEmail(AuthDto authDto) {
         if (emailExists(authDto.getEmail())) {
             throw new UserAlreadyExistException("There is an account with that email address: "
                     + authDto.getEmail());
@@ -28,10 +32,9 @@ public class AuthServiceImpl implements AuthService {
 
         Auth auth = Auth.builder()
                 .email(authDto.getEmail())
-                .password(authDto.getPassword())
+                .password(passwordEncoder.encode(authDto.getPassword()))
                 .build();
 
-        // TODO: encrypt password
         // TODO: create user
         return authRepository.save(auth);
     }

@@ -30,6 +30,7 @@ dependencies {
 	implementation 'com.arangodb:arangodb-spring-data:3.6.0'
 	implementation "com.arangodb:arangodb-spring-boot-starter:${arangodbVersion}"
 	implementation 'org.passay:passay:1.6.0' // Password validation library
+	implementation 'org.springdoc:springdoc-openapi-ui:1.6.6'
 
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
