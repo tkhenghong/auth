@@ -1,34 +1,25 @@
 package com.awpghost.auth.validators;
 
+import com.google.common.base.Joiner;
+import org.passay.CharacterData;
+import org.passay.*;
+import org.springframework.beans.factory.annotation.Value;
+
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
-
-import com.google.common.base.Joiner;
-
-import org.passay.*;
-
-import org.springframework.beans.factory.annotation.Value;
 
 import static org.passay.IllegalCharacterRule.ERROR_CODE;
 
 public class PasswordRequirementsValidator implements ConstraintValidator<ValidPassword, String> {
 
-    private PasswordValidator passwordValidator;
-
     private final int lowerCaseCharacterLength;
-
     private final int upperCaseCharacterLength;
-
     private final int digitNumberCharacterLength;
-
     private final String specialCharactersList;
-
     private final int specialCharactersLength;
-
     private final int minimumPasswordLength;
-
     private final int maximumPasswordLength;
-
+    private PasswordValidator passwordValidator;
     private CharacterRule lowerCaseRule;
 
     private CharacterRule upperCaseRule;

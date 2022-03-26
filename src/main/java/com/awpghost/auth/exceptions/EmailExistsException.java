@@ -4,8 +4,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
-public final class UserAlreadyExistException extends RuntimeException {
-    public UserAlreadyExistException(String message) {
+public class EmailExistsException extends RuntimeException {
+    public EmailExistsException(final String message) {
         super(message);
     }
 }
