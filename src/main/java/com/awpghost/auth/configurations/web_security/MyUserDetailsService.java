@@ -7,6 +7,7 @@ import com.awpghost.auth.persistence.models.Role;
 import com.awpghost.auth.persistence.repositories.AuthRepository;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -27,6 +29,7 @@ import java.util.Optional;
 
 @Log4j2
 @Service
+@Transactional
 public class MyUserDetailsService implements UserDetailsService {
 
     private final WebClient.Builder webClientBuilder;
@@ -38,7 +41,7 @@ public class MyUserDetailsService implements UserDetailsService {
     private final HttpServletRequest request;
 
     @Autowired
-    public MyUserDetailsService(WebClient.Builder webClientBuilder, AuthRepository authRepository, LoginAttemptService loginAttemptService, HttpServletRequest request) {
+    public MyUserDetailsService(WebClient.Builder webClientBuilder, @Lazy AuthRepository authRepository, LoginAttemptService loginAttemptService, HttpServletRequest request) {
         super();
         this.webClientBuilder = webClientBuilder;
         this.authRepository = authRepository;

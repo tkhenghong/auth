@@ -9,6 +9,7 @@ import com.awpghost.auth.persistence.models.Auth;
 import com.awpghost.auth.persistence.repositories.AuthRepository;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.ReactiveValueOperations;
 import org.springframework.http.HttpHeaders;
@@ -23,24 +24,24 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 
 @Log4j2
-@Service
 @Transactional
+@Service
 public class AuthServiceImpl implements AuthService {
 
     private final AuthRepository authRepository;
 
     private final PasswordEncoder passwordEncoder;
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     private final WebClient.Builder webClientBuilder;
 
     private final ReactiveValueOperations<String, String> reactiveValueOps;
 
     @Autowired
-    AuthServiceImpl(AuthRepository authRepository,
+    AuthServiceImpl(@Lazy AuthRepository authRepository,
                     PasswordEncoder passwordEncoder,
-                    KafkaTemplate<String, Object> kafkaTemplate,
+                    KafkaTemplate<String, String> kafkaTemplate,
                     WebClient.Builder webClientBuilder,
                     ReactiveRedisTemplate<String, String> reactiveRedisTemplate) {
         this.authRepository = authRepository;

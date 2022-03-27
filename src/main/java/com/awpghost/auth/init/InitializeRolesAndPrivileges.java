@@ -9,6 +9,7 @@ import com.awpghost.auth.persistence.repositories.RolePrivilegesRepository;
 import com.awpghost.auth.persistence.repositories.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
@@ -30,9 +31,9 @@ public class InitializeRolesAndPrivileges implements CommandLineRunner {
     boolean alreadySetup = false;
 
     @Autowired
-    InitializeRolesAndPrivileges(RoleRepository roleRepository,
-                                 RolePrivilegesRepository rolePrivilegesRepository,
-                                 PrivilegeRepository privilegeRepository,
+    InitializeRolesAndPrivileges(@Lazy RoleRepository roleRepository,
+                                 @Lazy RolePrivilegesRepository rolePrivilegesRepository,
+                                 @Lazy PrivilegeRepository privilegeRepository,
                                  ArangoOperations arangoOperations) {
         this.roleRepository = roleRepository;
         this.rolePrivilegesRepository = rolePrivilegesRepository;
