@@ -44,6 +44,11 @@
       "name": "jwt.alive.seconds",
       "type": "java.lang.String",
       "description": "JWT token valid seconds."
+    },
+    {
+      "name": "token.expiration.time.seconds",
+      "type": "java.lang.Integer",
+      "description": "Token expiration time in seconds."
     }
   ]
 }

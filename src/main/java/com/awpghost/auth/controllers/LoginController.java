@@ -2,7 +2,8 @@ package com.awpghost.auth.controllers;
 
 import com.awpghost.auth.dto.requests.AuthEmailDto;
 import com.awpghost.auth.dto.requests.AuthMobileNoDto;
-import com.awpghost.auth.dto.responses.GenericResponse;
+import com.awpghost.auth.dto.responses.AccessToken;
+import com.awpghost.auth.dto.responses.OTPResponse;
 import com.awpghost.auth.services.auth.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 
@@ -27,29 +29,23 @@ public class LoginController {
         this.authService = authService;
     }
 
-    @Operation(summary = "Login with email address")
+    @Operation(summary = "Login with email address", description = "Login with email address. OTP/token is generated. Proceed to verify OTP/token.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successful login"),
     })
     @PostMapping("/login/email")
-    public GenericResponse emailLogin(@Parameter(description = "Login Information") @Valid AuthEmailDto authEmailDto) {
+    public Mono<AccessToken> emailLogin(@Parameter(description = "Login Information") @Valid AuthEmailDto authEmailDto) {
         log.debug("Login using email address. Body: {}", authEmailDto.toString());
-
-        String response = authService.loginByEmail(authEmailDto).block();
-
-        return new GenericResponse("success");
+        return authService.loginByEmail(authEmailDto);
     }
 
     @Operation(summary = "Login with mobile number")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Login OTP/token is generated. Proceed to verify OTP/token."),
+            @ApiResponse(responseCode = "200", description = "Login OTP is generated. Proceed to verify OTP."),
     })
     @PostMapping("/login/mobileNo")
-    public GenericResponse mobileLogin(@Parameter(description = "OTP or token") @Valid final AuthMobileNoDto authMobileNoDto) {
+    public Mono<OTPResponse> mobileLogin(@Parameter(description = "OTP or token") @Valid final AuthMobileNoDto authMobileNoDto) {
         log.debug("Login using mobile number. Body: {}", authMobileNoDto.toString());
-
-        authService.loginByMobileNo(authMobileNoDto);
-
-        return new GenericResponse("success");
+        return authService.loginByMobileNo(authMobileNoDto);
     }
 }

@@ -8,7 +8,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 @Data
-public class AuthEmailDto {
+public class AuthEmailDto extends RegistrationDto {
     @ValidEmail
     @NotNull
     @NotEmpty
@@ -18,4 +18,6 @@ public class AuthEmailDto {
     @NotNull
     @NotEmpty
     private String password;
+
+    private Boolean rememberMe;
 }

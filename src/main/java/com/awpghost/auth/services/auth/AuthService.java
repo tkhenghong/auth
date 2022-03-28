@@ -5,6 +5,7 @@ import com.awpghost.auth.dto.requests.AuthMobileNoDto;
 import com.awpghost.auth.dto.requests.ChangePasswordDto;
 import com.awpghost.auth.dto.requests.ResetPasswordDto;
 import com.awpghost.auth.dto.responses.AccessToken;
+import com.awpghost.auth.dto.responses.OTPResponse;
 import com.awpghost.auth.persistence.models.Auth;
 import reactor.core.publisher.Mono;
 
@@ -13,17 +14,15 @@ public interface AuthService {
 
     Mono<Void> registerByMobileNo(AuthMobileNoDto authMobileNoDto);
 
-    Mono<AccessToken> verifyMobileNoToken(String token);
+//    Mono<Boolean> verifyMobileNoToken(String token);
+//
+//    Mono<AccessToken> verifyMobileNoOTP(String token, String otp);
+//
+//    Mono<Boolean> verifyEmailToken(String token);
 
-    Mono<AccessToken> verifyMobileNoOTP(String otp);
+    Mono<AccessToken> loginByEmail(AuthEmailDto authEmailDto);
 
-    Mono<AccessToken> verifyEmailToken(String token);
-
-    Mono<AccessToken> verifyEmailOTP(String otp);
-
-    Mono<String> loginByEmail(AuthEmailDto authEmailDto);
-
-    Mono<Void> loginByMobileNo(AuthMobileNoDto authMobileNoDto);
+    Mono<OTPResponse> loginByMobileNo(AuthMobileNoDto authMobileNoDto);
 
     Mono<Void> emailForgotPassword(String email);
 
