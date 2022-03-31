@@ -1,0 +1,12 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: auth
+data:
+  password.lower.case.character.length: 1
+  password.upper.case.character.length: 1
+  password.digit.number.character.length: 1
+  password.special.character.list: !@#$%^&*()_+
+  password.special.character.length: 1
+  password.minimum.length: 8
+  password.maximum.length: 32

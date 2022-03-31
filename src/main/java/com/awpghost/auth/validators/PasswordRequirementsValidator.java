@@ -3,23 +3,34 @@ package com.awpghost.auth.validators;
 import com.google.common.base.Joiner;
 import org.passay.CharacterData;
 import org.passay.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
 import static org.passay.IllegalCharacterRule.ERROR_CODE;
 
+@Component
 public class PasswordRequirementsValidator implements ConstraintValidator<ValidPassword, String> {
 
     private final int lowerCaseCharacterLength;
+
     private final int upperCaseCharacterLength;
+
     private final int digitNumberCharacterLength;
+
     private final String specialCharactersList;
+
     private final int specialCharactersLength;
+
     private final int minimumPasswordLength;
+
     private final int maximumPasswordLength;
+
     private PasswordValidator passwordValidator;
+
     private CharacterRule lowerCaseRule;
 
     private CharacterRule upperCaseRule;
@@ -32,6 +43,7 @@ public class PasswordRequirementsValidator implements ConstraintValidator<ValidP
 
     private UsernameRule usernameRule;
 
+    @Autowired
     PasswordRequirementsValidator(@Value("${password.lower.case.character.length}") int lowerCaseCharacterLength,
                                   @Value("${password.upper.case.character.length}") int upperCaseCharacterLength,
                                   @Value("${password.digit.number.character.length}") int digitNumberCharacterLength,
@@ -49,7 +61,7 @@ public class PasswordRequirementsValidator implements ConstraintValidator<ValidP
     }
 
     @Override
-    public void initialize(ValidPassword arg0) {
+    public void initialize(final ValidPassword arg0) {
         generatePasswordRules();
         generatePasswordValidator();
     }
@@ -64,7 +76,7 @@ public class PasswordRequirementsValidator implements ConstraintValidator<ValidP
     }
 
     private void generatePasswordValidator() {
-        passwordValidator = new PasswordValidator(lowerCaseRule, upperCaseRule, digitRule, specialCharacterRule, lengthRule, usernameRule);
+        passwordValidator = new PasswordValidator(lowerCaseRule, upperCaseRule, digitRule, specialCharacterRule, lengthRule, usernameRule, new WhitespaceRule());
     }
 
     private void createLowerCaseCharacterRule() {

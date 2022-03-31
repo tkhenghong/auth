@@ -14,21 +14,15 @@ public interface AuthService {
 
     Mono<Void> registerByMobileNo(AuthMobileNoDto authMobileNoDto);
 
-//    Mono<Boolean> verifyMobileNoToken(String token);
-//
-//    Mono<AccessToken> verifyMobileNoOTP(String token, String otp);
-//
-//    Mono<Boolean> verifyEmailToken(String token);
-
     Mono<AccessToken> loginByEmail(AuthEmailDto authEmailDto);
 
     Mono<OTPResponse> loginByMobileNo(AuthMobileNoDto authMobileNoDto);
 
-    Mono<Void> emailForgotPassword(String email);
+    Mono<Boolean> emailForgotPassword(String email);
 
-    Mono<Void> emailResetPassword(ResetPasswordDto resetPasswordDto);
+    Mono<Boolean> emailResetPassword(ResetPasswordDto resetPasswordDto);
 
-    Mono<Void> emailChangePassword(ChangePasswordDto changePasswordDto);
+    Mono<Boolean> emailChangePassword(ChangePasswordDto changePasswordDto);
 
     Mono<Void> logout();
 }

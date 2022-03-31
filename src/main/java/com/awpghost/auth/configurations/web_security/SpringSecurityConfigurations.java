@@ -1,6 +1,7 @@
 package com.awpghost.auth.configurations.web_security;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -34,6 +35,9 @@ public class SpringSecurityConfigurations extends WebSecurityConfigurerAdapter {
 
     private final JWTAuthorizationFilter jwtAuthorizationFilter;
 
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
+
     @Autowired
     SpringSecurityConfigurations(UserDetailsService userDetailsService, JWTAuthorizationFilter jwtAuthorizationFilter) {
         this.userDetailsService = userDetailsService;
@@ -48,14 +52,16 @@ public class SpringSecurityConfigurations extends WebSecurityConfigurerAdapter {
                     conf.authenticationEntryPoint(this::authenticationFailedHandler);
                 })
                 .authorizeRequests().antMatchers("/auth/**").permitAll()
-                .anyRequest().authenticated()
+//                .anyRequest().authenticated()
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
         // JWT Filter
         http.addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
 
         // Enable HTTPS
-        http.requiresChannel().anyRequest().requiresSecure();
+        if (activeProfile.equals("prod")) {
+            http.requiresChannel().anyRequest().requiresSecure();
+        }
     }
 
     private void authenticationFailedHandler(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) {

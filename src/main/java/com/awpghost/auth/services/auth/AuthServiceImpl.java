@@ -6,39 +6,40 @@ import com.awpghost.auth.dto.responses.AccessToken;
 import com.awpghost.auth.dto.responses.OTPResponse;
 import com.awpghost.auth.dto.responses.UserInfoDto;
 import com.awpghost.auth.enums.VerificationType;
-import com.awpghost.auth.exceptions.*;
+import com.awpghost.auth.exceptions.RegistrationException;
+import com.awpghost.auth.exceptions.TokenVerificationException;
+import com.awpghost.auth.exceptions.UserNotFoundException;
 import com.awpghost.auth.persistence.models.Auth;
 import com.awpghost.auth.persistence.models.Role;
 import com.awpghost.auth.persistence.models.relationships.AuthUser;
 import com.awpghost.auth.persistence.repositories.AuthRepository;
 import com.awpghost.auth.persistence.repositories.AuthUserRepository;
 import com.awpghost.auth.persistence.repositories.RoleRepository;
+import com.awpghost.auth.services.user.UserClient;
 import com.awpghost.auth.utils.jwt.JwtUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.core.ReactiveValueOperations;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import java.time.ZoneId;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Log4j2
@@ -56,21 +57,16 @@ public class AuthServiceImpl implements AuthService {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    private final ReactiveValueOperations<String, String> reactiveValueOps;
-
-    private final WebClient userWebClient;
-
     private final MyUserDetailsService myUserDetailsService;
 
     private final JwtUtil jwtUtil;
 
-    private final Integer TOKEN_EXPIRATION_TIME;
-
     private final AuthenticationManager authenticationManager;
 
-    private final Integer TOKEN_LENGTH;
-
     private final AtomicReference<ObjectMapper> objectMapper;
+
+    @Autowired(required = false)
+    private UserClient userClient;
 
     @Autowired
     AuthServiceImpl(@Lazy AuthRepository authRepository,
@@ -81,67 +77,57 @@ public class AuthServiceImpl implements AuthService {
                     PasswordEncoder passwordEncoder,
                     ObjectMapper objectMapper,
                     AuthenticationManager authenticationManager,
-                    KafkaTemplate<String, String> kafkaTemplate,
-                    WebClient.Builder webClientBuilder,
-                    ReactiveRedisTemplate<String, String> reactiveRedisTemplate,
-                    @Value("${otp.length}") Integer TOKEN_LENGTH,
-                    @Value("${token.expiration.time.seconds}") Integer TOKEN_EXPIRATION_TIME) {
+                    KafkaTemplate<String, String> kafkaTemplate) {
         this.authRepository = authRepository;
         this.authUserRepository = authUserRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.kafkaTemplate = kafkaTemplate;
-        this.reactiveValueOps = reactiveRedisTemplate.opsForValue();
         this.myUserDetailsService = myUserDetailsService;
         this.jwtUtil = jwtUtil;
-        this.TOKEN_EXPIRATION_TIME = TOKEN_EXPIRATION_TIME;
-        this.TOKEN_LENGTH = TOKEN_LENGTH;
         this.authenticationManager = authenticationManager;
         this.objectMapper = new AtomicReference<>(objectMapper);
-
-        userWebClient = webClientBuilder.baseUrl("http://user").build();
     }
 
     @Override
     public Mono<Auth> registerByEmail(AuthEmailDto authEmailDto) {
-        return getUserInfo(authEmailDto, VerificationType.EMAIL)
+
+        return userClient.getUserByEmail(authEmailDto.getEmail())
+                .onErrorResume(WebClientResponseException.class, clientResponse -> {
+                    if (clientResponse.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                        UserDto userDto = UserDto.builder()
+                                .email(authEmailDto.getEmail())
+                                .build();
+                        return userClient.registerUser(userDto);
+                    } else {
+                        log.info("Unable to register user with email address: {}", authEmailDto.getEmail());
+                        return Mono.error(new RegistrationException("Unable to register user with email address: " + authEmailDto.getEmail()));
+                    }
+                })
                 .flatMap(userInfoDto -> createAuthFromUser(userInfoDto, VerificationType.EMAIL));
     }
 
     @Override
     public Mono<Void> registerByMobileNo(AuthMobileNoDto authMobileNoDto) {
-        return getUserInfo(authMobileNoDto, VerificationType.MOBILE_NUMBER)
-                .flatMap(userInfoDto -> createAuthFromUser(userInfoDto, VerificationType.MOBILE_NUMBER))
-                .flatMap(auth -> {
-                    auth.setPassword(passwordEncoder.encode(authMobileNoDto.getPassword()));
-                    return Mono.just(authRepository.save(auth));
-                }).then();
+        return userClient.getUserByEmail(authMobileNoDto.getMobileNo())
+                .onErrorResume(WebClientResponseException.class, clientResponse -> {
+                    if (clientResponse.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                        UserDto userDto = UserDto.builder()
+                                .mobileNo(authMobileNoDto.getMobileNo())
+                                .nationality(authMobileNoDto.getNationality())
+                                .build();
+                        return userClient.registerUser(userDto);
+                    } else {
+                        log.info("Unable to register user with mobile number: {}", authMobileNoDto.getMobileNo());
+                        return Mono.error(new RegistrationException("Unable to register user with mobile number: {}" + authMobileNoDto.getMobileNo()));
+                    }
+                })
+                .flatMap(userInfoDto -> createAuthFromUser(userInfoDto, VerificationType.MOBILE_NUMBER)).then();
     }
-
-//    public Mono<Boolean> verifyMobileNoToken(String token) {
-//        return verifyToken(token, VerificationType.MOBILE_NUMBER);
-//    }
-//
-//    /**
-//     * @param token: A token that is used to verify the user.
-//     * @return Access token if the user is verified.
-//     */
-//    @Override
-//    public Mono<AccessToken> verifyMobileNoOTP(String token, String otp) {
-//        return verifyOTP(token, otp, VerificationType.MOBILE_NUMBER);
-//    }
-//
-//    @Override
-//    public Mono<Boolean> verifyEmailToken(String token) {
-//        return verifyToken(token, VerificationType.EMAIL);
-//    }
 
     @Override
     public Mono<AccessToken> loginByEmail(AuthEmailDto authEmailDto) {
-        return userWebClient.get().uri("?email=", authEmailDto.getEmail())
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .retrieve()
-                .bodyToMono(UserInfoDto.class)
+        return userClient.getUserByEmail(authEmailDto.getEmail())
                 .flatMap(userInfoDto -> Mono.just(authRepository.findById(userInfoDto.getId()).get())).cast(Auth.class)
                 .onErrorMap(NoSuchElementException.class, e -> new UserNotFoundException("User not found"))
                 .flatMap(this::generateJWT);
@@ -153,83 +139,58 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public Mono<OTPResponse> loginByMobileNo(AuthMobileNoDto authMobileNoDto) {
-        return userWebClient.get().uri("?mobileNo=", authMobileNoDto.getMobileNo())
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .retrieve()
-                .bodyToMono(UserInfoDto.class)
+        return userClient.getUserByMobileNo(authMobileNoDto.getMobileNo())
                 .flatMap(userInfoDto -> Mono.just(authRepository.findById(userInfoDto.getId()).get())).cast(Auth.class)
                 .flatMap(auth -> Mono.just(authUserRepository.findById(auth.getId()).get())).cast(AuthUser.class)
                 .onErrorMap(NoSuchElementException.class, e -> new UserNotFoundException("User not found"))
-                .flatMap(this::requestOTP).cast(OTPResponse.class);
-    }
-
-    private Mono<OTPResponse> requestOTP(AuthUser authUser) {
-        return userWebClient.post().uri("/mobileNo/otp?id=" + authUser.getUserId())
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .retrieve().bodyToMono(OTPResponse.class);
+                .flatMap(authUser -> userClient.generateMobileNumberOTP(authUser.getUserId())).cast(OTPResponse.class);
     }
 
     @Override
-    public Mono<Void> emailForgotPassword(String email) {
-        return null;
+    public Mono<Boolean> emailForgotPassword(String email) {
+        return userClient.generateEmailToken(email);
     }
 
     @Override
-    public Mono<Void> emailResetPassword(ResetPasswordDto resetPasswordDto) {
-        return null;
+    public Mono<Boolean> emailResetPassword(ResetPasswordDto resetPasswordDto) {
+        return userClient.getUserById(resetPasswordDto.getToken()).flatMap(userInfoDto -> {
+            Auth auth = authRepository.findById(userInfoDto.getId()).get();
+            auth.setPassword(passwordEncoder.encode(resetPasswordDto.getPassword()));
+
+            authRepository.save(auth);
+
+            return convertMonoObjectToString(PasswordResetDto.builder().email(userInfoDto.getEmail()).build()).flatMap(converted -> {
+                kafkaTemplate.send("email.password.reset", converted);
+                return Mono.just(true);
+            });
+        }).onErrorReturn(false);
     }
 
     @Override
-    public Mono<Void> emailChangePassword(ChangePasswordDto changePasswordDto) {
-        return null;
+    public Mono<Boolean> emailChangePassword(ChangePasswordDto changePasswordDto) {
+        return Mono.fromCallable(() -> {
+            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+            UserDetails userDetails = (UserDetails) usernamePasswordAuthenticationToken.getPrincipal();
+
+            Optional<Auth> authOptional = authRepository.findById(userDetails.getUsername());
+
+            if (authOptional.isPresent()) {
+                Auth auth = authOptional.get();
+
+                auth.setPassword(passwordEncoder.encode(changePasswordDto.getPassword()));
+
+                authRepository.save(auth);
+
+                return true;
+            } else {
+                throw new UserNotFoundException("User not found");
+            }
+        }).onErrorReturn(false);
     }
 
     @Override
     public Mono<Void> logout() {
         return null;
-    }
-
-    private Mono<UserInfoDto> getUserInfo(RegistrationDto registrationDto, VerificationType verificationType) {
-        String url;
-        String id;
-        UserDto userDto = UserDto.builder().build();
-        String errorMessage = "Unable to register user with";
-
-        switch (verificationType) {
-            case EMAIL:
-                AuthEmailDto authEmailDto = (AuthEmailDto) registrationDto;
-                id = authEmailDto.getEmail();
-                url = "?email=" + id;
-                userDto.setEmail(id);
-                break;
-            case MOBILE_NUMBER:
-                AuthMobileNoDto authMobileNoDto = (AuthMobileNoDto) registrationDto;
-                id = authMobileNoDto.getMobileNo();
-                url = "?mobileNo=" + id;
-                userDto.setMobileNo(id);
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid verification type");
-        }
-
-        return userWebClient.get().uri(url)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .retrieve()
-                .bodyToMono(UserInfoDto.class)
-                .onErrorResume(WebClientResponseException.class, clientResponse -> {
-                    if (clientResponse.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-                        return getUserInfo(userDto);
-                    } else {
-                        log.info(errorMessage + id);
-                        return Mono.error(new RegistrationException(errorMessage + id));
-                    }
-                });
-    }
-
-    private Mono<UserInfoDto> getUserInfo(UserDto userDto) {
-        return userWebClient.post().uri("/register").body(Mono.just(userDto), UserDto.class)
-                .retrieve()
-                .bodyToMono(UserInfoDto.class);
     }
 
     private Mono<Auth> createAuthFromUser(UserInfoDto userInfoDto, VerificationType verificationType) {
@@ -262,50 +223,6 @@ public class AuthServiceImpl implements AuthService {
             return saved;
         });
     }
-
-//    private Mono<AccessToken> verifyOTP(String usedIdToken, String otp, VerificationType verificationType) {
-//        String url;
-//
-//        switch (verificationType) {
-//            case EMAIL:
-//                url = "verify-email?token=" + usedIdToken + "&otp=" + otp;
-//                break;
-//            case MOBILE_NUMBER:
-//                url = "verify-mobileNo?token=" + usedIdToken + "&otp=" + otp;
-//                break;
-//            default:
-//                throw new IllegalArgumentException("Invalid verification type");
-//        }
-//
-//        return Mono.fromCallable(() -> userWebClient.get().uri(url)
-//                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-//                        .retrieve()
-//                        .onStatus(HttpStatus::is4xxClientError, clientResponse -> {
-//                            if (clientResponse.statusCode().equals(HttpStatus.NOT_FOUND)) {
-//                                throw new VerificationException("Something went wrong");
-//                            } else {
-//                                throw new VerificationException("Invalid token");
-//                            }
-//                        })
-//                        .bodyToMono(Boolean.class)
-//                        .flatMap(verified -> {
-//                            if (verified) {
-//                                Optional<AuthUser> authUserOptional = authUserRepository.findByUserId(usedIdToken);
-//                                if (authUserOptional.isPresent()) {
-//                                    Optional<Auth> authOptional = authRepository.findById(authUserOptional.get().getAuth().getId());
-//
-//                                    if (authOptional.isPresent()) {
-//                                        return Mono.just(authOptional.get());
-//                                    }
-//                                }
-//                            }
-//
-//                            return Mono.error(new VerificationException("Invalid/Expired token"));
-//                        }))
-//                .cast(Auth.class)
-//                .flatMap(this::generateJWT)
-//                .onErrorMap(e -> new TokenVerificationException("Unable to verify token: " + usedIdToken));
-//    }
 
     private Mono<AccessToken> generateJWT(Auth auth) {
         return Mono.fromCallable(() -> {

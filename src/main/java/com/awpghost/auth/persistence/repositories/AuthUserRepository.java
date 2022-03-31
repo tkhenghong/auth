@@ -7,5 +7,6 @@ import java.util.Optional;
 
 public interface AuthUserRepository extends ArangoRepository<AuthUser, String> {
     Optional<AuthUser> findByUserId(String userId);
+
     Optional<AuthUser> findByAuth_Id(String authId);
 }

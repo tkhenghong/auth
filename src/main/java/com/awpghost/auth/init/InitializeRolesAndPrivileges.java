@@ -7,6 +7,7 @@ import com.awpghost.auth.persistence.models.relationships.RolePrivileges;
 import com.awpghost.auth.persistence.repositories.PrivilegeRepository;
 import com.awpghost.auth.persistence.repositories.RolePrivilegesRepository;
 import com.awpghost.auth.persistence.repositories.RoleRepository;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Lazy;
@@ -17,6 +18,7 @@ import org.springframework.util.ObjectUtils;
 import java.util.Arrays;
 import java.util.List;
 
+@Log4j2
 @Component
 public class InitializeRolesAndPrivileges implements CommandLineRunner {
 
@@ -43,6 +45,7 @@ public class InitializeRolesAndPrivileges implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        log.info("Initialize roles and privileges.");
         if (alreadySetup)
             return;
 
@@ -91,6 +94,7 @@ public class InitializeRolesAndPrivileges implements CommandLineRunner {
         return roleRepository.save(role);
     }
 
+    @Transactional
     RolePrivileges createRolePrivileges(Role role, Privilege privilege) {
         return rolePrivilegesRepository.save(RolePrivileges.builder()
                 .role(role)
